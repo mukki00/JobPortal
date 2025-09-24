@@ -5,7 +5,10 @@ def get_all_jobs(offset=0, per_page=50, job_category=None):
     conn = connect()
     try:
         cursor = conn.cursor()
-        cursor.execute(sql_get_all_jobs(job_category), {"offset": offset, "per_page": per_page, "job_category": job_category})
+        if job_category:
+            cursor.execute(sql_get_all_jobs(job_category), {"offset": offset, "per_page": per_page, "job_category": job_category})
+        else:
+            cursor.execute(sql_get_all_jobs(None), {"offset": offset, "per_page": per_page})
         rows = cursor.fetchall()
         columns = [desc[0] for desc in cursor.description]
         jobs = []
@@ -29,7 +32,10 @@ def get_all_jobs(offset=0, per_page=50, job_category=None):
 def get_jobs_count(job_category):
     conn = connect()
     cursor = conn.cursor()
-    cursor.execute(sql_get_job_count(job_category), {"job_category": job_category})
+    if job_category:
+        cursor.execute(sql_get_job_count(job_category), {"job_category": job_category})
+    else:
+        cursor.execute(sql_get_job_count(job_category))
     rows = cursor.fetchall()
     conn.close()
     return rows[0][0]

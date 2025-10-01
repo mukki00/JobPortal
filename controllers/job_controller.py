@@ -78,8 +78,29 @@ def update_mark_rejected(job_id):
         return jsonify({"message": "Job rejected successfully!", "job": data, "job_id": job_id}), 201
 
 # Example endpoint: Get applied jobs by ID
-@job_controller.route('/jobs/rejected-expired', methods=['GET'])
+@job_controller.route('/jobs/apply', methods=['GET'])
 def get_applied_jobs():
+    page = int(request.args.get('page', 1))
+    per_page = int(request.args.get('per_page', 50))
+    offset = (page - 1) * per_page
+    job_category = request.args.get('job_category', None)
+    print(job_category, flush=True)
+    try:
+        applied_jobs = get_applied_jobs_from_db(offset, per_page, job_category if job_category else None)
+        applied_jobs = [applied_job for applied_job in applied_jobs if applied_job.get('APPLIED') == 'Y']
+        total = len(applied_jobs)
+        return jsonify({
+            'jobs': applied_jobs,
+            'page': page,
+            'per_page': per_page,
+            'total': total
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# Example endpoint: Get rejected or expired jobs by ID
+@job_controller.route('/jobs/rejected-expired', methods=['GET'])
+def get_rejected_or_expired_jobs():
     page = int(request.args.get('page', 1))
     per_page = int(request.args.get('per_page', 50))
     offset = (page - 1) * per_page

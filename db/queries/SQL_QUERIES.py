@@ -10,7 +10,7 @@ def sql_get_all_jobs(job_category=None):
                 SELECT
                 JOB_ID, JOB_TITLE, COMPANY, COMPANY_LOCATION, JOB_LINK, JOB_TYPE, LINKEDIN_VERIFIED, JOB_CATEGORY, APPLIED, JOB_SOURCE,
                 EXPIRED, REJECTED
-                 JOB_POST
+                FROM JOB_POST
                 WHERE JOB_CATEGORY = :job_category
                 AND APPLIED = 'N'
                 ORDER BY JOB_ID OFFSET :offset ROWS FETCH NEXT :per_page ROWS ONLY
@@ -54,7 +54,7 @@ def sql_get_all_rejected_and_expired_jobs(job_category=None):
                 EXPIRED, REJECTED
                 FROM JOB_POST
                 WHERE JOB_CATEGORY = :job_category
-                AND EXPIRED = 'Y' OR REJECTED = 'Y'
+                AND (EXPIRED = 'Y' OR REJECTED = 'Y')
                 ORDER BY JOB_ID OFFSET :offset ROWS FETCH NEXT :per_page ROWS ONLY
                 """
     else:

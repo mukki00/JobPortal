@@ -4,6 +4,12 @@ def sql_get_job_count(job_category=None):
     else:
         return "SELECT count(*) FROM JOB_POST"
 
+def sql_get_available_job_count(job_category=None):
+    if job_category:
+        return "SELECT count(*) FROM JOB_POST WHERE JOB_CATEGORY = :job_category and APPLIED = 'N' and (EXPIRED = 'N' and REJECTED = 'N')"
+    else:
+        return "SELECT count(*) FROM JOB_POST WHERE APPLIED = 'N' and (EXPIRED = 'N' and REJECTED = 'N')"
+
 def sql_get_all_jobs(job_category=None):
     if job_category:
         return  """

@@ -1,6 +1,7 @@
 from db.connection import connect
 from db.queries.SQL_QUERIES import (sql_get_all_jobs, sql_get_job_count, sql_mark_job_as_applied, sql_get_all_applied_jobs,
-                                    sql_mark_job_as_expired, sql_mark_job_as_retired, sql_get_all_rejected_and_expired_jobs)
+                                    sql_mark_job_as_expired, sql_mark_job_as_retired, sql_get_all_rejected_and_expired_jobs,
+                                    sql_get_available_job_count)
 
 def get_all_jobs(offset=0, per_page=50, job_category=None):
     conn = connect()
@@ -37,6 +38,17 @@ def get_jobs_count(job_category):
         cursor.execute(sql_get_job_count(job_category), {"job_category": job_category})
     else:
         cursor.execute(sql_get_job_count(job_category))
+    rows = cursor.fetchall()
+    conn.close()
+    return rows[0][0]
+
+def get_available_jobs_count_from_db(job_category):
+    conn = connect()
+    cursor = conn.cursor()
+    if job_category:
+        cursor.execute(sql_get_available_job_count(job_category), {"job_category": job_category})
+    else:
+        cursor.execute(sql_get_available_job_count(job_category))
     rows = cursor.fetchall()
     conn.close()
     return rows[0][0]

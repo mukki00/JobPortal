@@ -1,6 +1,7 @@
 from flask import Blueprint, jsonify, request
 from db.connection import connect
-from service.getData import get_all_jobs, get_jobs_count
+from service.getData import (get_all_jobs, get_jobs_count, mark_job_as_applied, get_applied_jobs_from_db,
+                             mark_job_as_expired, mark_job_as_rejected, get_expired_and_rejected_jobs)
 
 job_controller = Blueprint('job_controller', __name__)
 
@@ -43,19 +44,56 @@ def get_job_count():
     finally:
         conn.close()
 
-# Example endpoint: Add a new job
-@job_controller.route('/jobs', methods=['POST'])
-def add_job():
+# Example endpoint: Update job as applied
+@job_controller.route('/jobs/<int:job_id>/apply', methods=['PUT'])
+def update_mark_applied(job_id):
     data = request.get_json()
-    return jsonify({"message": "Job added successfully!", "job": data}), 201
+    applied_status = data.get('applied', 'Y')
+    affected_row_count = mark_job_as_applied(job_id, applied_status)
+    if affected_row_count == 0:
+        return jsonify({"message": f"No job found with ID {job_id} or already marked as applied."}), 404
+    else:
+        return jsonify({"message": "Job added successfully!", "job": data, "job_id": job_id}), 201
 
-# Example endpoint: Get job by ID
-@job_controller.route('/jobs/<int:job_id>', methods=['GET'])
-def get_job(job_id):
-    job = {"id": job_id, "title": "Software Engineer", "company": "TechCorp"}
-    return jsonify(job)
+# Example endpoint: Update job as expired
+@job_controller.route('/jobs/<int:job_id>/expire', methods=['PUT'])
+def update_mark_expired(job_id):
+    data = request.get_json()
+    expired_status = data.get('expired', 'Y')
+    affected_row_count = mark_job_as_expired(job_id, expired_status)
+    if affected_row_count == 0:
+        return jsonify({"message": f"No job found with ID {job_id} or already marked as expired."}), 404
+    else:
+        return jsonify({"message": "expired status updated successfully!", "job": data, "job_id": job_id}), 201
 
-# Example endpoint: Delete a job
-@job_controller.route('/jobs/<int:job_id>', methods=['DELETE'])
-def delete_job(job_id):
-    return jsonify({"message": f"Job with ID {job_id} deleted successfully!"})
+# Example endpoint: Update job as rejected
+@job_controller.route('/jobs/<int:job_id>/reject', methods=['PUT'])
+def update_mark_rejected(job_id):
+    data = request.get_json()
+    rejected_status = data.get('rejected', 'Y')
+    affected_row_count = mark_job_as_rejected(job_id, rejected_status)
+    if affected_row_count == 0:
+        return jsonify({"message": f"No job found with ID {job_id} or already marked as rejected."}), 404
+    else:
+        return jsonify({"message": "Job rejected successfully!", "job": data, "job_id": job_id}), 201
+
+# Example endpoint: Get applied jobs by ID
+@job_controller.route('/jobs/rejected-expired', methods=['GET'])
+def get_applied_jobs():
+    page = int(request.args.get('page', 1))
+    per_page = int(request.args.get('per_page', 50))
+    offset = (page - 1) * per_page
+    job_category = request.args.get('job_category', None)
+    print(job_category, flush=True)
+    try:
+        rejected_and_expired_jobs = get_expired_and_rejected_jobs(offset, per_page, job_category if job_category else None)
+        rejected_and_expired_jobs = [rejected_and_expired_job for rejected_and_expired_job in rejected_and_expired_jobs]
+        total = len(rejected_and_expired_jobs)
+        return jsonify({
+            'jobs': rejected_and_expired_jobs,
+            'page': page,
+            'per_page': per_page,
+            'total': total
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500

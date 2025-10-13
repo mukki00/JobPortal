@@ -10,6 +10,18 @@ def sql_get_available_job_count(job_category=None):
     else:
         return "SELECT count(*) FROM JOB_POST WHERE APPLIED = 'N' and (EXPIRED = 'N' and REJECTED = 'N')"
 
+def sql_get_inactive_jobs_count(job_category=None):
+    if job_category:
+        return "SELECT count(*) FROM JOB_POST WHERE JOB_CATEGORY = :job_category AND (EXPIRED = 'Y' OR REJECTED = 'Y')"
+    else:
+        return "SELECT count(*) FROM JOB_POST WHERE EXPIRED = 'Y' OR REJECTED = 'Y'"
+
+def sql_get_applied_jobs_count(job_category=None):
+    if job_category:
+        return "SELECT count(*) FROM JOB_POST WHERE JOB_CATEGORY = :job_category and APPLIED = 'Y'"
+    else:
+        return "SELECT count(*) FROM JOB_POST WHERE APPLIED = 'Y'"
+
 def sql_get_all_jobs(job_category=None):
     if job_category:
         return  """
@@ -69,7 +81,7 @@ def sql_get_all_rejected_and_expired_jobs(job_category=None):
                 JOB_ID, JOB_TITLE, COMPANY, COMPANY_LOCATION, JOB_LINK, JOB_TYPE, LINKEDIN_VERIFIED, JOB_CATEGORY, APPLIED, JOB_SOURCE,
                 EXPIRED, REJECTED
                 FROM JOB_POST
-                WHERE EXPIRED = 'Y' AND REJECTED = 'Y'
+                WHERE EXPIRED = 'Y' OR REJECTED = 'Y'
                 ORDER BY JOB_ID OFFSET :offset ROWS FETCH NEXT :per_page ROWS ONLY
                 """
 

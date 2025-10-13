@@ -2,7 +2,7 @@ from flask import Blueprint, jsonify, request
 from db.connection import connect
 from service.getData import (get_all_jobs, get_jobs_count, mark_job_as_applied, get_applied_jobs_from_db,
                              mark_job_as_expired, mark_job_as_rejected, get_expired_and_rejected_jobs,
-                             get_available_jobs_count_from_db)
+                             get_available_jobs_count_from_db, get_applied_jobs_count_from_db, get_inactive_jobs_count_from_db)
 
 job_controller = Blueprint('job_controller', __name__)
 
@@ -45,6 +45,28 @@ def get_available_jobs_count():
         return jsonify({"error": str(e)}), 500
     finally:
         conn.close()
+
+@job_controller.route('/applied/count', methods=['GET'])
+def get_applied_jobs_count():
+    job_category = request.args.get('job_category', None)
+    conn = connect()
+    try:
+        count = get_applied_jobs_count_from_db(job_category)
+        return jsonify({'count': count})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    finally:
+        conn.close()
+
+@job_controller.route('/inactive/count', methods=['GET'])
+def get_inactive_jobs_count():
+    job_category = request.args.get('job_category', None)
+    conn = connect()
+    try:
+        count = get_inactive_jobs_count_from_db(job_category)
+        return jsonify({'count': count})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 # Get jobs count
 @job_controller.route('/count', methods=['GET'])
@@ -103,7 +125,7 @@ def get_applied_jobs():
     try:
         applied_jobs = get_applied_jobs_from_db(offset, per_page, job_category if job_category else None)
         applied_jobs = [applied_job for applied_job in applied_jobs if applied_job.get('APPLIED') == 'Y']
-        total = len(applied_jobs)
+        total = get_applied_jobs_count_from_db(job_category if job_category else None)
         return jsonify({
             'jobs': applied_jobs,
             'page': page,
@@ -123,7 +145,7 @@ def get_rejected_or_expired_jobs():
     print(job_category, flush=True)
     try:
         rejected_and_expired_jobs = get_expired_and_rejected_jobs(offset, per_page, job_category if job_category else None)
-        total = len(rejected_and_expired_jobs)
+        total = get_inactive_jobs_count_from_db(job_category if job_category else None)
         return jsonify({
             'jobs': rejected_and_expired_jobs,
             'page': page,
